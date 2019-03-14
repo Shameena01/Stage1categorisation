@@ -1,0 +1,110 @@
+# VBF Categorisation
+Code to define categories in the VBF Higgs to diphoton analysis using the VBF di-jet MVA
+
+
+## Setup
+1. Install the vbf-learn package
+   
+```bash
+git clone git@github.com:sethzenz/vbf-learn.git
+cd vbf-learn
+pip install --user .
+pip install --user tabulate
+pip install --user tables 
+```
+
+## Generating a first .h5 file from the ntuples
+You will need a json script and a python script (generally called run.py).The json script needs to be modified based on what ntuples/processes you are using.
+In json config files you should be able to set the file names and the trees used following this pattern:
+
+```bash
+"files": [
+"/path/to/the/file/output_sample_file_0.root/tree/name",
+"/path/to/the/file/output_sample_file_2.root/tree/name",
+
+```
+ 
+These two scripts are presently named 'train_vbf_data.json' and 'run2017.py' in this repository.
+
+Once you have your json and python scripts ready in a single directory with the necessary
+ntuples, you may run the python script:
+
+```bash
+python run.py
+```
+
+Note that this command is different if you name the python file differently. If you name the
+json file is named differently, this needs to be changed in the json script. 
+
+The command should produce a .h5 file (you can specify the name of the .h5 file in the run.py script). This .h5 file only contains MC variables mentioned in the json script. You may also use
+the json script to include different variables in the .h5 file. Simply add them in a similar way that other variables are specified in the script. 
+
+In the scripts in this repository, this .h5 file is called '2017_Analysis_Without_datadriven.h5'
+
+
+## Applying the fake factor method and generating a second .h5 file
+
+The python script used in this step will apply the fake-factor method.
+This notebook only uses the .h5 file created in the previous step.
+You need to enter the name of the .h5 file in the fake factor python script.
+
+This script is called 'extraction-fake-factors.py' in this repository.
+
+You may specify the name of the output .h5 file in the last line. This notebook will produce an output .h5 file that will contain a QCD category in addition to the other categories already
+present in the first .h5 file.
+This category is the data-driven QCD background and serves to be used in place of the gjet and jet-jet (qcd) MC backgrounds.  
+
+
+## Training the VBF-dijet MVA
+There are several versions of this script. The most basic one is called 'dijet_MVA_training_DataDrivenBKG.py' in this repository.
+
+Using this version of the script, you should be able to plot input distributions, train the vbfdijet MVA and test the performance on data. 
+
+The input to the notebook is the .h5 file created in the previous step.
+
+At the end of the script, a few lines enable a .xml file to be extracted (contains all the weights from training).
+These lines make use of a converter python script called "converter.py" in this repository.
+
+## Cross-checks
+You may want to train the vbf dijet mva on different backgrounds/check the background rejection capabilities w.r.t different types of background.
+
+There are a number of scripts that can perform these x-checks:
+
+*For training on datadriven backgrounds, use
+'dijet_MVA_training_DataDrivenBKGwith-XCHECKS.py'
+
+*For training on MC, use
+'dijet_MVA_training_MonteCarloBKGwith-XCHECKS.py'
+(note that when training on MC you need to apply a relaxed pre-selection)
+
+*For training on MSB and testing with data-driven backgrounds, use
+'dijet_MVA_training_MassSideBandBKG-with-XCHECKS-bkgs.py'
+
+*For training on MSB and testing on MC, use
+'dijet_MVA_training_MassSideBandBKG-with-XCHECKS-mc.py'
+
+*For training on ggh and diphoton backgrounds only (no QCD) and testing on data-driven backgrounds, use
+'dijet_MVA_training_ggHAndDiphoBKG-with-XCHECKS-bkgs.py'
+
+*For training on ggh and diphoton backgrounds only (no QCD) and testing on MC, use
+'dijet_MVA_training_ggHAndDiphoBKG-with-XCHECKS-mc.py'
+
+These x-checks may be confusing, more details at:
+https://twiki.cern.ch/twiki/bin/view/CMS/VBFDijetMVAPlots
+
+
+## Bin optimisation
+The binopt package may be installed from the binopt folder in this repository.
+
+The script used for bin optimisation is called 'binopt_example-Hgg.py' in this repository.
+
+To run the binopt script, you will need:
+1. The .h5 file with the data-driven background,
+2. A .pkl format of the trained classifier. 
+
+The pkl format of the classifier should already be created by the 'dijet_MVA_training_DataDrivenBKG.py' script.
+
+In the binopt script, you need to specify the .h5 file (with data-driven background) and the .pkl format of the classifier.  
+You may choose the number of bins and the figure of merit in the binopt script.
+
+
