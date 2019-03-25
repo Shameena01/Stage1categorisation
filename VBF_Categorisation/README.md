@@ -93,18 +93,6 @@ These x-checks may be confusing, more details at:
 https://twiki.cern.ch/twiki/bin/view/CMS/VBFDijetMVAPlots
 
 
-## Bin optimisation
-The binopt package may be installed from the binopt folder in this repository.
 
-The script used for bin optimisation is called 'binopt_example-Hgg.py' in this repository.
-
-To run the binopt script, you will need:
-1. The .h5 file with the data-driven background,
-2. A .pkl format of the trained classifier. 
-
-The pkl format of the classifier should already be created by the 'dijet_MVA_training_DataDrivenBKG.py' script.
-
-In the binopt script, you need to specify the .h5 file (with data-driven background) and the .pkl format of the classifier.  
-You may choose the number of bins and the figure of merit in the binopt script.
 
 
