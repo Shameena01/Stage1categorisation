@@ -71,23 +71,23 @@ You may want to train the vbf dijet mva on different backgrounds/check the backg
 You may select an option in he training script as follows:
 
 *For training on datadriven backgrounds, use
-
+ Train_datadriven_test_datadriven = True
 
 *For training on MC, use
-
+ Train_MC_test_MC = True
 (note that when training on MC you need to apply a relaxed pre-selection)
 
 *For training on MSB and testing with data-driven backgrounds, use
-
+ Train_MSB_test_datadriven = True
 
 *For training on MSB and testing on MC, use
-
+ Train_MSB_test_MC = True
 
 *For training on ggh and diphoton backgrounds only (no QCD) and testing on data-driven backgrounds, use
-
+ Train_gghanddipho_test_datadriven = True
 
 *For training on ggh and diphoton backgrounds only (no QCD) and testing on MC, use
-
+ Train_gghanddipho_test_mc  = True
 
 These x-checks may be confusing, more details at:
 https://twiki.cern.ch/twiki/bin/view/CMS/VBFDijetMVAPlots
