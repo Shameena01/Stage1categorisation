@@ -68,26 +68,26 @@ These lines make use of a converter python script called "converter.py" in this 
 ## Cross-checks
 You may want to train the vbf dijet mva on different backgrounds/check the background rejection capabilities w.r.t different types of background.
 
-There are a number of scripts that can perform these x-checks:
+You may select an option in he training script as follows:
 
 *For training on datadriven backgrounds, use
-'dijet_MVA_training_DataDrivenBKGwith-XCHECKS.py'
+
 
 *For training on MC, use
-'dijet_MVA_training_MonteCarloBKGwith-XCHECKS.py'
+
 (note that when training on MC you need to apply a relaxed pre-selection)
 
 *For training on MSB and testing with data-driven backgrounds, use
-'dijet_MVA_training_MassSideBandBKG-with-XCHECKS-bkgs.py'
+
 
 *For training on MSB and testing on MC, use
-'dijet_MVA_training_MassSideBandBKG-with-XCHECKS-mc.py'
+
 
 *For training on ggh and diphoton backgrounds only (no QCD) and testing on data-driven backgrounds, use
-'dijet_MVA_training_ggHAndDiphoBKG-with-XCHECKS-bkgs.py'
+
 
 *For training on ggh and diphoton backgrounds only (no QCD) and testing on MC, use
-'dijet_MVA_training_ggHAndDiphoBKG-with-XCHECKS-mc.py'
+
 
 These x-checks may be confusing, more details at:
 https://twiki.cern.ch/twiki/bin/view/CMS/VBFDijetMVAPlots

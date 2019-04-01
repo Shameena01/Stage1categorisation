@@ -2,10 +2,8 @@ import matplotlib.pyplot as plt
 import numpy  as np
 import pandas as pd
 import sys
-sys.path.append(\
+sys.path.append("..")
 
-%matplotlib inline
-#plt.style.use('physics')
 
 plt.rcParams['axes.grid'       ]  = False
 plt.rcParams['xtick.labelsize' ]  = 14
@@ -14,11 +12,9 @@ plt.rcParams['axes.labelsize'  ]  = 14
 plt.rcParams['legend.fancybox' ]  = False
 
 pd.options.mode.chained_assignment = None
-import os 
-os.path.exists('2017_Analysis_Without_datadriven_PUJID_new_ptHjj_var.h5')
-# data_raw = pd.read_hdf('../data/hgg-trees-moriond-2017.h5')
-# data_raw = pd.read_hdf('From_Seth_without_datadriven_generated_by_me_no_photon_ID_cut.h5')
-data_raw = pd.read_hdf('2017_Analysis_Without_datadriven_PUJID_new_ptHjj_var.h5')
+
+
+data_raw = pd.read_hdf('2017_Analysis_Without_datadriven.h5')
 data_raw['dijet_centrality_gg'] = np.exp(-4*(data_raw.dijet_Zep/data_raw.dijet_abs_dEta)**2)
 def evtPassPUJID( row ):
     leadPtIndex = -1
@@ -69,6 +65,9 @@ def evtPassPUJID( row ):
     pujidCutsVals[ (3,3) ] = -0.01
         
     leadJetPasses = False
+
+    
+
     if row['dijet_jet1_pujid_mva'] > pujidCutsVals[ (leadPtIndex, leadEtaIndex) ]: leadJetPasses=True
     
     #repeat for sublead jet
@@ -76,9 +75,17 @@ def evtPassPUJID( row ):
     if row['dijet_jet2_pujid_mva'] > pujidCutsVals[ (subleadPtIndex, subleadEtaIndex) ]: subleadJetPasses=True
     
     evtPasses = leadJetPasses and subleadJetPasses
+    print('ok')
     return evtPasses
-data_raw[\
-data_raw = data_raw[data_raw[\
+
+
+
+
+
+#data_raw["passedPUJID"] = data_raw.apply(evtPassPUJID, axis=1)
+#data_raw = data_raw[data_raw["passedPUJID"] == True ]
+
+
 data_all = data_raw[(data_raw.dipho_sublead_elveto == 1   ) & 
                     (data_raw.dipho_lead_elveto    == 1   ) ] 
 data_all['m_sideband'] = np.abs(data_all.dipho_mass - 125 ) > 10
@@ -88,15 +95,19 @@ data_all.loc[(data_all.min_id>-0.2), 'cr_region'] = 'PP'
 data_all.loc[(data_all.max_id<-0.4), 'cr_region'] = 'FF'
 data_all.loc[(data_all.dipho_leadIDMVA    >-0.2) & (data_all.dipho_subleadIDMVA <-0.4), 'cr_region'] = 'PF'
 data_all.loc[(data_all.dipho_subleadIDMVA >-0.2) & (data_all.dipho_leadIDMVA    <-0.4), 'cr_region'] = 'FP'
+
 def vbf_presel(data):
     return (
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
+        (data["leadPho_PToM"       ]> (1/3.0))&
+        (data["sublPho_PToM"       ]> (1/4.0))&
+        (data["dijet_LeadJPt"      ]> 40     )& 
+        (data["dijet_SubJPt"       ]> 30     )&
+        (data["dijet_Mjj"          ]> 250    )&
+        (data["dipho_mass"         ]> 100    )&
+        (data["dipho_mass"         ]< 180    ))
+
+
+
 
 data_all['isvbf'] = vbf_presel(data_all)
 data_all['isvbf'] = vbf_presel(data_all)
@@ -124,7 +135,7 @@ data_all.loc[((np.abs(data_all.dipho_subleadEta)>=1.5)&(np.abs(data_all.dipho_su
 data_all['avg_et' ] = (data_all.dipho_leadEt +  data_all.dipho_subleadEt)/2.0
 data_all['diff_et'] = (data_all.dipho_leadEt -  data_all.dipho_subleadEt)
 def divide( a, b ):
-    \
+    
     with np.errstate(divide='ignore', invalid='ignore'):
         c = np.true_divide( a, b )
         c[ ~ np.isfinite( c )] = 0  # -inf inf NaN
@@ -294,7 +305,7 @@ dd_FP.weight = np.ones(dd_FP.shape[0])
 for b in np.unique(dd_FP.weight_bins.values):
     for cat in np.unique(dd_FP.lead_eta_cat):
         w = dd_FP[(dd_FP.weight_bins == b) & (dd_FP.lead_eta_cat == cat)].weight.values 
-        w = w * fake_FP[cat][b] * purity_FP[cat][b]/ lumi
+     #   w = w * fake_FP[cat][b] * purity_FP[cat][b]/ lumi
         dd_FP.loc[(dd_FP.weight_bins == b) & (dd_FP.lead_eta_cat == cat), 'weight'] = w
 lumi = 41.86
 dd_FF.weight = np.ones(dd_FF.shape[0])
@@ -340,8 +351,8 @@ def fit(var = 'dijet_Mjj',
     plt.title(var)
     z_ = chi2(v_,w_)
     plt.contour(v_,w_, z_, np.linspace(np.min(z_), 2*np.min(z_), 3), cmap=plt.cm.RdYlGn_r)
-    plt.xlabel(\
-    plt.ylabel(\
+    plt.xlabel("$\mu_{pf}$")
+    plt.ylabel("$\mu_{ff}$")
     
     plt.axvline(1,ls='--',color='k')
     plt.axhline(1,ls='--',color='k')
@@ -550,7 +561,7 @@ def varibale_data_driven(var = 'dijet_Mjj',var_label='$m_{jj}$ (GeV)', label='',
     plt.subplots_adjust(hspace=.0)
     
     #plt.savefig('data-driven-xcheck-%s-%s.pdf'% (label, var))
-    plt.savefig('2017_fullVBFPreselection_withtightpujid_data-driven-xcheck-%s-%s.png'% (label, var))
+    
 # version = 'double-fake-0720-cut-0.9'
 version = 'double-fake-0924'
 varibale_data_driven(var = 'dipho_mass',var_label='$m_{\\gamma\\gamma}$ (GeV)', 
@@ -580,9 +591,6 @@ varibale_data_driven(var = 'dipho_subleadPt',
 varibale_data_driven(var = 'dipho_PToM',
                      var_label='$p_{T}^{\\gamma\\gamma}/m_{\\gamma\\gamma}$', 
                      bins_ = np.linspace(0,4,21),log=False, mu=1.0,label=version)
-varibale_data_driven(var = 'n_jet_30',
-                     var_label='$N_{jets} (p_{T}>30 GeV)$', 
-                     bins_ = np.linspace(2,10,9),log=False, mu=1.0,label=version)
 varibale_data_driven(var = 'leadPho_PToM',
                      var_label='$p_{T}^{\\gamma_1}/m_{\\gamma\\gamma}$', 
                      bins_ = np.linspace(0,4,11),log=False, mu=1.0,label=version)
@@ -602,5 +610,5 @@ varibale_data_driven(var = 'dijet_centrality_gg',
 data_driven['sample'] = 'QCD'
 data_driven.Y = 0
 data_out = pd.concat([data_driven, data_region, data_SMMC, data_signal])
-np.unique(data_out['sample'])
-data_out.to_hdf('2017_Analysis_with_datadriven_PUJID_new_ptHjj_var.h5'   , 'results_table', mode='w', format='table')
+#np.unique(data_out['sample'])
+data_out.to_hdf('2017_Analysis_with_datadriven.h5'   , 'results_table', mode='w', format='table')

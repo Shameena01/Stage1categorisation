@@ -13,26 +13,19 @@ plt.rcParams['axes.labelsize'  ]  = 14
 plt.rcParams['legend.fancybox' ]  = False
 
 pd.options.mode.chained_assignment = None
-Let load the data from the root file using the small libray that you can find in here [1]. 
-This read a jason file that contains the features and the samples that will be used in the training. 
-# Use wget to get the example file
-! wget https://yhaddad.web.cern.ch/yhaddad/VBF/misc/hgg-double-fake-trees-training-2017.h5
+
 ##### Reading the .h5 file without opening it
 import os 
-os.path.exists('From_Seth_with_datadriven_generated_by_me.h5')
-indata = pd.read_hdf('From_Seth_with_datadriven_generated_by_me.h5')
+#os.path.exists('From_Seth_with_datadriven_generated_by_me.h5')
+indata = pd.read_hdf('2017_Analysis_with_datadriven.h5')
 # Training
-#### Displaying all columns
-pd.set_option(\
-pd.get_option(\
-##### .head(n=5) reads the first n rows, default is 5
-indata.head()
+
 ##### Plotting histogram of categories
 #define a frame after the photon ID cut
 df_after_photon_id_cut = indata[
     (indata['pass_id'] == True  )]
-categories = df_after_photon_id_cut[\
-#print(categories)
+categories = df_after_photon_id_cut["sample"].values
+
 import collections
 c = collections.Counter(categories)
 #print(c)
@@ -48,17 +41,19 @@ plt.bar(y_pos, number, align='center', alpha=0.5)
 plt.xticks(y_pos, objects)
 plt.ylabel('Number of samples')
 plt.title('Category distribution')
- 
-plt.show()
+#plt.savefig("categories.png") 
+
 ##### Can use the following to check the names of all the columns in the dataframe
-list(indata.columns.values) 
+#list(indata.columns.values) 
 ##### Checking what kind of data is in the sample column of the indata dataframe
 ###### What do these strings stand for?
-my_list = indata[\
-print(my_list)
-uniqueVals = indata[\
+
+my_list = indata["sample"].values
+uniqueVals = indata["sample"].unique()
 print(uniqueVals)
-print(indata[\
+
+
+
 ##### Adding a column to the dataframe
 indata['dijet_centrality_gg'] = np.exp(-4*(indata.dijet_Zep/indata.dijet_abs_dEta)**2)
 ##### Defining a number of other data frames
@@ -86,6 +81,16 @@ df_data = indata[
     (indata['sample'] == 'data')& 
     (np.abs(indata['dipho_mass'] - 125)>10)
 ]
+
+df_ggh_and_dipho = indata[
+    (indata['sample'] != 'data' ) & 
+    (indata['sample'] != 'qcd'  ) & 
+    (indata['sample'] != 'vbf'  ) &
+    (indata['sample'] != 'gjet' ) & 
+    (indata['sample'] != 'zee'  ) &
+    (indata['sample'] != 'QCD'  )
+]
+
 ### creating data frames to check the input variable distributions
 df_SM_bkg = indata[
     (indata['sample'] == 'QCD'  ) |
@@ -95,24 +100,37 @@ df_ggh = indata[
     (indata['sample'] == 'ggh'  )]
 df_vbf = indata[
     (indata['sample'] == 'vbf'  )]
+
+
+
 def vbf_relax(data):
     return (
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
+        (data["leadPho_PToM"       ]> (1/4.0))&
+        (data["sublPho_PToM"       ]> (1/5.0))&
+        (data["dijet_LeadJPt"      ]> 30     )& 
+        (data["dijet_SubJPt"       ]> 20     )&
+        (data["dijet_Mjj"          ]> 100    )&
+        (data["dipho_mass"         ]> 100    )&
+        (data["dipho_mass"         ]< 180    ))
 def vbf_presel(data):
     return (
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
+        (data["leadPho_PToM"       ]> (1/3.0))&
+        (data["sublPho_PToM"       ]> (1/4.0))&
+        (data["dijet_LeadJPt"      ]> 40     )& 
+        (data["dijet_SubJPt"       ]> 30     )&
+        (data["dijet_Mjj"          ]> 250    )&
+        (data["dipho_mass"         ]> 100    )&
+        (data["dipho_mass"         ]< 180    ))
+
+
+
+
+
+
+
+
+##################################################
+
 df_SM_bkg = df_SM_bkg[vbf_presel(df_SM_bkg)]
 df_ggh = df_ggh[vbf_presel(df_ggh)]
 df_vbf = df_vbf[vbf_presel(df_vbf)]
@@ -145,7 +163,11 @@ plt.ylabel('1/N dN/d($p_T(jet_1)$)')
 plt.xlim([40,800])
 plt.ylim([0,0.01])
 plt.savefig('9-month-leading-jet-pT',bbox_inches = 'tight')
-plt.show()
+#plt.show()
+######################################################
+
+
+#####################################################
 numpy_SM_bkg = df_SM_bkg['dijet_SubJPt'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -174,7 +196,14 @@ plt.xlim([30,500])
 plt.ylim([0, 0.03])
 plt.savefig('9-month-sublead-pT.png',bbox_inches = 'tight')
 
-plt.show()
+#plt.show()
+##########################################################
+
+
+
+
+
+#########################################################
 numpy_SM_bkg = df_SM_bkg['dijet_abs_dEta'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -203,7 +232,11 @@ plt.ylabel('1/N dN/d($\\Delta\\eta_{jj}$)')
 plt.xlim([0,8])
 plt.ylim([0,0.35])
 plt.savefig('9-month-diff-in-eta-jets.png',bbox_inches = 'tight')
-plt.show()
+#plt.show()
+
+
+
+############################################################
 numpy_SM_bkg = df_SM_bkg['dijet_Mjj'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -232,7 +265,14 @@ plt.xlim([250,3500])
 plt.ylim([0,0.004])
 plt.savefig('9-month-invariant-mass.png',bbox_inches = 'tight')
 
-plt.show()
+#plt.show()
+############################################################
+
+
+
+
+
+###############################################################
 numpy_SM_bkg = df_SM_bkg['dijet_centrality_gg'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -261,7 +301,14 @@ plt.ylabel('1/N dN/d($C_{\\gamma\\gamma}$)')
 plt.xlim([0,1])
 plt.ylim([0,12])
 plt.savefig('9month-centrality.png',bbox_inches = 'tight' )
-plt.show()
+#plt.show()
+###########################################################
+
+
+
+
+
+##########################################################
 numpy_SM_bkg = df_SM_bkg['dijet_dipho_dphi_trunc'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -292,7 +339,11 @@ plt.xlim([0,3])
 plt.ylim([0,12])
 plt.savefig('9-month-dijet-dphoton-azimuth-diff.png', bbox_inches = 'tight')
 plt.legend(loc ='upper left')
-plt.show()
+#plt.show()
+
+
+
+################################################################
 numpy_SM_bkg = df_SM_bkg['leadPho_PToM'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -321,7 +372,11 @@ plt.xlim([0.25,3.5])
 plt.ylim([0,2.5])
 plt.savefig('9-month-lead-pToM.png',bbox_inches = 'tight')
 
-plt.show()
+#plt.show()
+
+
+################################################################
+
 numpy_SM_bkg = df_SM_bkg['sublPho_PToM'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -350,7 +405,12 @@ plt.xlim([0.4,1.6])
 plt.ylim([0,10])
 plt.savefig('9-month-sublead-pToM.png',bbox_inches = 'tight')
 
-plt.show()
+#plt.show()
+############################################################
+
+
+
+
 numpy_SM_bkg = df_SM_bkg['dijet_minDRJetPho'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -379,7 +439,16 @@ plt.xlim([0.5,4.0])
 plt.ylim([0,0.7])
 plt.savefig('9-month-Rmin.png',bbox_inches = 'tight')
 
-plt.show()
+#plt.show()
+
+
+
+
+
+
+
+
+################################################################################
 numpy_SM_bkg = df_SM_bkg['dijet_dphi'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -412,7 +481,15 @@ plt.legend(loc = 'upper left')
 plt.savefig('9-month-diff in azimuth-bet-two-jets.png',bbox_inches = 'tight' )
 
 
-plt.show()
+#plt.show()
+
+
+
+
+
+
+
+######################################
 numpy_SM_bkg = df_SM_bkg['dipho_mva'].values
 numpy_SM_bkg_weight = df_SM_bkg['weight'].values
 
@@ -435,30 +512,17 @@ plt.hist(numpy_vbf, bins=50,
              alpha=0.3, histtype='stepfilled', normed=1, color = 'red', range = (-1,1), label = 'vbf(125)')
 plt.legend(loc = 'lower right')
 
-plt.savefig('output_diphoton_MVA_score_Yacine_datadriven_h5.png')
+plt.savefig('output_diphoton_MVA_score.png')
 plt.xlabel('diphoton MVA')
 
 
 
 
-plt.show()
-#####  Checking what is in the dataframes defined above
-my_list2 = df_bkgs[\
-print(my_list2)
-uniqueVals = df_bkgs[\
-print(uniqueVals)
-my_list3 = df_mc[\
-print(my_list3)
-uniqueVals = df_mc[\
-print(uniqueVals)
-my_list4 = df_sign[\
-print(my_list4)
-uniqueVals = df_sign[\
-print(uniqueVals)
-my_list5 = df_data[\
-print(my_list5)
-uniqueVals = df_data[\
-print(uniqueVals)
+#plt.show()
+
+
+
+
 ##### A subset of the number of the columns in  the indata dataframe will be used for training
 ##### Try changing the features that are used i.e see if using more features gives better results
 ##### The functions for preselecting the vbf events are defined (full and relaxed selections). These are pretty self-explanatory
@@ -475,76 +539,163 @@ _features_ = [u'dijet_LeadJPt'  ,u'dijet_SubJPt',
               u'dijet_dphi'     ,u'dijet_minDRJetPho',
               u'leadPho_PToM'   ,u'sublPho_PToM']
 
+
 def vbf_presel(data):
     return (
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
+        (data["leadPho_PToM"       ]> (1/3.0))&
+        (data["sublPho_PToM"       ]> (1/4.0))&
+        (data["dijet_LeadJPt"      ]> 40     )& 
+        (data["dijet_SubJPt"       ]> 30     )&
+        (data["dijet_Mjj"          ]> 250    )&
+        (data["dipho_mass"         ]> 100    )&
+        (data["dipho_mass"         ]< 180    ))
 
 def vbf_relax(data):
     return (
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-        (data[\
-df_sign.columns
+        (data["leadPho_PToM"       ]> (1/4.0))&
+        (data["sublPho_PToM"       ]> (1/5.0))&
+        (data["dijet_LeadJPt"      ]> 30     )& 
+        (data["dijet_SubJPt"       ]> 20     )&
+        (data["dijet_Mjj"          ]> 100    )&
+        (data["dipho_mass"         ]> 100    )&
+        (data["dipho_mass"         ]< 180    ))
+
+
 #####  Here the vbf preselection function (full) is applied to all the defined dataframes
-The numpy array D will contain 'vbf' samples from df_sign and 'QCD', 'dipho' and 'ggH' samples from df_bkgs
-(only feature columns included)
-The numpy array Y will be the label array of binary labels, 1 for 'vbf' events and 0 for bkg events i.e for 'QCD', 'dipho', 'ggH'
-The numpy array W will contain values in the weight column of df_sign and df_bkg
-The numpy array I will contain values in the sample column of df_sign (this should be 'vbf') and values in the 'sample' column of df_bkg (i.e a mixture of 'QCD', 'dipho' and 'ggH'.
+#The numpy array D will contain 'vbf' samples from df_sign and 'QCD', 'dipho' and 'ggH' samples from df_bkgs
+#(only feature columns included)
+#The numpy array Y will be the label array of binary labels, 1 for 'vbf' events and 0 for bkg events i.e for 'QCD', 'dipho', 'ggH'
+#The numpy array W will contain values in the weight column of df_sign and df_bkg
+#The numpy array I will contain values in the sample column of df_sign (this should be 'vbf') and values in the 'sample' column of df_bkg (i.e a mixture of 'QCD', 'dipho' and 'ggH'.
 
 
-The same is then done for df_sign and df_data to get the X_data, Y_data, W_data, I_data, O_data
-df_bkgs = df_bkgs[vbf_presel(df_bkgs)]
-df_mc   = df_mc  [vbf_presel(df_mc  )]
-df_sign = df_sign[vbf_presel(df_sign)]
-df_data = df_data[vbf_presel(df_data)]
+#The same is then done for df_sign and df_data to get the X_data, Y_data, W_data, I_data, O_data
 
-D  =  np.concatenate((df_sign[_features_],df_bkgs[_features_]))
-Y  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_bkgs.shape[0])))
-W  =  np.concatenate((df_sign['weight'],df_bkgs['weight']))
-I  =  np.concatenate((df_sign['sample'],df_bkgs['sample']))
-O  =  np.concatenate((df_sign['dipho_mass'],df_bkgs['dipho_mass']))
+#choose how to train
 
-X_data  =  np.concatenate((df_sign[_features_],df_data[_features_]))
-Y_data  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_data.shape[0])))
-W_data  =  np.concatenate((df_sign['weight'],df_data['weight']))
-I_data  =  np.concatenate((df_sign['sample'],df_data['sample']))
-O_data  =  np.concatenate((df_sign['dipho_mass'],df_data['dipho_mass']))
+Train_datadriven_test_datadriven = True
+Train_MC_test_MC = False
+Train_MSB_test_datadriven = False
+Train_MSB_test_MC = False
+Train_gghanddipho_test_datadriven = False
+Train_gghanddipho_test_mc = False
+
+
+
+if (Train_datadriven_test_datadriven or Train_MSB_test_datadriven or Train_gghanddipho_test_datadriven):
+   df_bkgs = df_bkgs[vbf_presel(df_bkgs)]
+   df_mc   = df_mc  [vbf_presel(df_mc  )]
+   df_sign = df_sign[vbf_presel(df_sign)]
+   df_data = df_data[vbf_presel(df_data)]
+
+
+if (Train_datadriven_test_datadriven or Train_MSB_test_datadriven or Train_gghanddipho_test_datadriven):  
+   D  =  np.concatenate((df_sign[_features_],df_bkgs[_features_]))
+   Y  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_bkgs.shape[0])))
+   W  =  np.concatenate((df_sign['weight'],df_bkgs['weight']))
+   I  =  np.concatenate((df_sign['sample'],df_bkgs['sample']))
+   O  =  np.concatenate((df_sign['dipho_mass'],df_bkgs['dipho_mass']))
+
+if (Train_datadriven_test_datadriven or Train_MC_test_MC or Train_MSB_test_datadriven or Train_MSB_test_MC):
+
+   X_data  =  np.concatenate((df_sign[_features_],df_data[_features_]))
+   Y_data  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_data.shape[0])))
+   W_data  =  np.concatenate((df_sign['weight'],df_data['weight']))
+   I_data  =  np.concatenate((df_sign['sample'],df_data['sample']))
+   O_data  =  np.concatenate((df_sign['dipho_mass'],df_data['dipho_mass']))
+
+
+
+
+if (Train_MC_test_MC or Train_MSB_test_MC or Train_gghanddipho_test_mc ):
+    df_bkgs = df_bkgs[vbf_relax(df_bkgs)]
+    df_mc   = df_mc  [vbf_relax(df_mc  )]
+    df_sign = df_sign[vbf_relax(df_sign)]
+    df_data = df_data[vbf_relax(df_data)]
+
+
+
+
+if (Train_MC_test_MC or Train_MSB_test_MC or Train_gghanddipho_test_mc):
+
+    D  =  np.concatenate((df_sign[_features_],df_mc[_features_]))
+    Y  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_mc.shape[0])))
+    W  =  np.concatenate((df_sign['weight'],df_mc['weight']))
+    I  =  np.concatenate((df_sign['sample'],df_mc['sample']))
+    O  =  np.concatenate((df_sign['dipho_mass'],df_mc['dipho_mass']))
+
+
+
+if(Train_gghanddipho_test_datadriven):
+    
+
+    X_data  =  np.concatenate((df_sign[_features_],df_ggh_and_dipho[_features_]))
+    Y_data  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_ggh_and_dipho.shape[0])))
+    W_data  =  np.concatenate((df_sign['weight'],df_ggh_and_dipho['weight']))
+    I_data  =  np.concatenate((df_sign['sample'],df_ggh_and_dipho['sample']))
+    O_data  =  np.concatenate((df_sign['dipho_mass'],df_ggh_and_dipho['dipho_mass']))
+
+
+if(Train_gghanddipho_test_mc):
+   
+   X_data  =  np.concatenate((df_sign[_features_],df_ggh_and_dipho[_features_]))
+   Y_data  =  np.concatenate((np.ones(df_sign.shape[0]),np.zeros(df_ggh_and_dipho.shape[0])))
+   W_data  =  np.concatenate((df_sign['weight'],df_ggh_and_dipho['weight']))
+   I_data  =  np.concatenate((df_sign['sample'],df_ggh_and_dipho['sample']))
+   O_data  =  np.concatenate((df_sign['dipho_mass'],df_ggh_and_dipho['dipho_mass']))
+
+
+
+
+
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split, cross_val_score
 
 np.random.seed(42)
 
-(
-    X_train, X_valid, 
-    Y_train, Y_valid,
-    W_train, W_valid,
-    I_train, I_valid,
-    O_train, O_valid
+if (Train_datadriven_test_datadriven or Train_MC_test_MC):
+    (
+        X_train, X_valid, 
+        Y_train, Y_valid,
+        W_train, W_valid,
+        I_train, I_valid,
+        O_train, O_valid
     
-) = train_test_split(
-    D, Y, W, I, O,
-    test_size=0.8,  # 0.2 was thedefault
-    random_state=17
-)
+        ) = train_test_split(
+        D, Y, W, I, O,
+        test_size=0.8,  # 0.2 was thedefault
+        random_state=17
+        )
+
+if (Train_MSB_test_datadriven or Train_MSB_test_MC or Train_gghanddipho_test_datadriven or Train_gghanddipho_test_mc):
+    (
+        X_train, X_valid,
+        Y_train, Y_valid,
+        W_train, W_valid,
+        I_train, I_valid,
+        O_train, O_valid
+
+        ) = train_test_split(
+        X_data, Y_data, W_data, I_data, O_data,
+        test_size=0.8,  # 0.2 was thedefault
+        random_state=17
+        )
+
+
+
+
 
 W_train = W_train * (W.sum()/W_train.sum())
 W_valid = W_valid * (W.sum()/W_valid.sum())
-print(np.unique(Y_train))
+
+
 import collections 
-print \
+print "number of classes (samples) inside the dataset ... train (validation)"
 for p in collections.Counter(I):
-    print \
+    print "%10s nevent = %10.2f [%10.2f]" % ( p, W_train[I_train==p].shape[0], W_valid[I_valid==p].shape[0])
+
+
+
 def normalize_weights(weights, classes):
     weights_ = np.copy(weights)
     for cl in np.unique(classes):
@@ -557,8 +708,11 @@ weights_train['target'] = normalize_weights(W_train,Y_train)
 from sklearn.ensemble   import GradientBoostingClassifier as GBC
 from pprint import pprint
 
+
+
+
 classifier = {
-    \
+    "moriond" : GBC(
         learning_rate=0.1,
         max_depth=5,
         max_features='auto', 
@@ -571,6 +725,7 @@ classifier = {
         warm_start=False)
 }
 pprint(classifier)
+
 from sklearn.base import clone
 
 clfs = {}
@@ -579,8 +734,8 @@ for i in weights_train:
         if 'xsec' in i and 'new' in c: continue
         print i +'-'+ c
         clfs[i+'-'+c]   = clone(classifier[c])
-###### checking what the clfs means now
-print (clfs)
+
+
 clf_info = GBC(
         learning_rate=0.1,
         max_depth=5,
@@ -592,11 +747,108 @@ clf_info = GBC(
         subsample=0.5, 
         verbose=1,
         warm_start=False)
-print(clf_info.n_estimators)
+#print(clf_info.n_estimators)
 ##### changing from labelled set to array
 print(weights_train)
 print(weights_train[i.split('-')[0]])
 print(clfs.items())
+
+if (Train_datadriven_test_datadriven):
+   rocs_valid_Y_ggh = Y_valid[(I_valid=='ggh')| (I_valid=='vbf')]
+   rocs_valid_W_ggh = W_valid[(I_valid=='ggh')| (I_valid=='vbf')]
+   X_valid_ggh = X_valid[(I_valid=='ggh')| (I_valid=='vbf')]
+
+   rocs_valid_Y_dipho = Y_valid[(I_valid=='dipho')| (I_valid=='vbf')]
+   rocs_valid_W_dipho = W_valid[(I_valid=='dipho')| (I_valid=='vbf')]
+   X_valid_dipho = X_valid[(I_valid=='dipho')| (I_valid=='vbf')]
+
+   rocs_valid_Y_QCD = Y_valid[(I_valid=='QCD')| (I_valid=='vbf')]
+   rocs_valid_W_QCD = W_valid[(I_valid=='QCD')| (I_valid=='vbf')]
+   X_valid_QCD = X_valid[(I_valid=='QCD')| (I_valid=='vbf')]
+
+
+if (Train_MC_test_MC):
+   rocs_valid_Y_ggh = Y_valid[(I_valid=='ggh')| (I_valid=='vbf')]
+   rocs_valid_W_ggh = W_valid[(I_valid=='ggh')| (I_valid=='vbf')]
+   X_valid_ggh = X_valid[(I_valid=='ggh')| (I_valid=='vbf')]
+
+   rocs_valid_Y_dipho = Y_valid[(I_valid=='dipho')| (I_valid=='vbf')]
+   rocs_valid_W_dipho = W_valid[(I_valid=='dipho')| (I_valid=='vbf')]
+   X_valid_dipho = X_valid[(I_valid=='dipho')| (I_valid=='vbf')]
+
+   rocs_valid_Y_qcd = Y_valid[(I_valid=='qcd')| (I_valid=='vbf')]
+   rocs_valid_W_qcd = W_valid[(I_valid=='qcd')| (I_valid=='vbf')]
+   X_valid_qcd = X_valid[(I_valid=='qcd')| (I_valid=='vbf')]
+
+   rocs_valid_Y_gjet = Y_valid[(I_valid=='gjet')| (I_valid=='vbf')]
+   rocs_valid_W_gjet = W_valid[(I_valid=='gjet')| (I_valid=='vbf')]
+   X_valid_gjet = X_valid[(I_valid=='gjet')| (I_valid=='vbf')]
+
+
+if (Train_MSB_test_datadriven):
+   rocs_valid_Y_ggh = Y[(I=='ggh')| (I=='vbf')]
+   rocs_valid_W_ggh = W[(I=='ggh')| (I=='vbf')]
+   X_valid_ggh = D[(I=='ggh')| (I=='vbf')]
+
+   rocs_valid_Y_dipho = Y[(I=='dipho')| (I=='vbf')]
+   rocs_valid_W_dipho = W[(I=='dipho')| (I=='vbf')]
+   X_valid_dipho = D[(I=='dipho')| (I=='vbf')]
+
+   rocs_valid_Y_QCD = Y[(I=='QCD')| (I=='vbf')]
+   rocs_valid_W_QCD = W[(I=='QCD')| (I=='vbf')]
+   X_valid_QCD = D[(I=='QCD')| (I=='vbf')]
+
+
+if(Train_MSB_test_MC):
+    rocs_valid_Y_ggh = Y[(I=='ggh')| (I=='vbf')]
+    rocs_valid_W_ggh = W[(I=='ggh')| (I=='vbf')]
+    X_valid_ggh = D[(I=='ggh')| (I=='vbf')]
+
+    rocs_valid_Y_dipho = Y[(I=='dipho')| (I=='vbf')]
+    rocs_valid_W_dipho = W[(I=='dipho')| (I=='vbf')]
+    X_valid_dipho = D[(I=='dipho')| (I=='vbf')]
+
+    rocs_valid_Y_qcd = Y[(I=='qcd')| (I=='vbf')]
+    rocs_valid_W_qcd = W[(I=='qcd')| (I=='vbf')]
+    X_valid_qcd = D[(I=='qcd')| (I=='vbf')]
+
+    rocs_valid_Y_gjet = Y[(I=='gjet')| (I=='vbf')]
+    rocs_valid_W_gjet = W[(I=='gjet')| (I=='vbf')]
+    X_valid_gjet = D[(I=='gjet')| (I=='vbf')]
+
+
+if(Train_gghanddipho_test_datadriven):
+  rocs_valid_Y_ggh = Y[(I=='ggh')| (I=='vbf')]
+  rocs_valid_W_ggh = W[(I=='ggh')| (I=='vbf')]
+  X_valid_ggh = D[(I=='ggh')| (I=='vbf')]
+
+  rocs_valid_Y_dipho = Y[(I=='dipho')| (I=='vbf')]
+  rocs_valid_W_dipho = W[(I=='dipho')| (I=='vbf')]
+  X_valid_dipho = D[(I=='dipho')| (I=='vbf')]
+
+  rocs_valid_Y_QCD = Y[(I=='QCD')| (I=='vbf')]
+  rocs_valid_W_QCD = W[(I=='QCD')| (I=='vbf')]
+  X_valid_QCD = D[(I=='QCD')| (I=='vbf')]
+
+
+if(Train_gghanddipho_test_mc):
+  rocs_valid_Y_ggh = Y[(I=='ggh')| (I=='vbf')]
+  rocs_valid_W_ggh = W[(I=='ggh')| (I=='vbf')]
+  X_valid_ggh = D[(I=='ggh')| (I=='vbf')]
+
+  rocs_valid_Y_dipho = Y[(I=='dipho')| (I=='vbf')]
+  rocs_valid_W_dipho = W[(I=='dipho')| (I=='vbf')]
+  X_valid_dipho = D[(I=='dipho')| (I=='vbf')]
+
+  rocs_valid_Y_qcd = Y[(I=='qcd')| (I=='vbf')]
+  rocs_valid_W_qcd = W[(I=='qcd')| (I=='vbf')]
+  X_valid_qcd = D[(I=='qcd')| (I=='vbf')]
+
+  rocs_valid_Y_gjet = Y[(I=='gjet')| (I=='vbf')]
+  rocs_valid_W_gjet = W[(I=='gjet')| (I=='vbf')]
+  X_valid_gjet = D[(I=='gjet')| (I=='vbf')]
+
+
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 rocs = {}
 prob = {}
@@ -605,6 +857,28 @@ cfun = {}
 rocs_valid = {}
 prob_valid = {}
 cfun_valid = {}
+
+
+if (Train_datadriven_test_datadriven or Train_MSB_test_datadriven or Train_gghanddipho_test_datadriven):
+   rocs_valid_ggh = {}
+   rocs_valid_dipho = {} 
+   rocs_valid_QCD = {}
+   prob_valid_ggh = {}
+   prob_valid_dipho = {}
+   prob_valid_QCD = {}
+
+
+if (Train_MC_test_MC or Train_MSB_test_MC or Train_gghanddipho_test_mc):
+   rocs_valid_ggh = {}
+   rocs_valid_dipho = {}
+   rocs_valid_qcd = {}
+   rocs_valid_gjet = {}
+   prob_valid_ggh = {}
+   prob_valid_dipho = {}
+   prob_valid_qcd = {}
+   prob_valid_gjet = {}
+
+
 
 for i, c in clfs.items():
     print ' -- training : ', i
@@ -615,8 +889,38 @@ for i, c in clfs.items():
 
     prob_valid[i] = c.predict_proba(X_valid)[:,1]
     rocs_valid[i] = roc_curve( Y_valid,prob_valid[i],sample_weight=W_valid)
+
+
+    if (Train_datadriven_test_datadriven or Train_MSB_test_datadriven or Train_gghanddipho_test_datadriven):
+        prob_valid_ggh[i] = c.predict_proba(X_valid_ggh)[:,1]
+        rocs_valid_ggh[i] = roc_curve(rocs_valid_Y_ggh,prob_valid_ggh[i],sample_weight=rocs_valid_W_ggh)
+    
+        prob_valid_dipho[i] = c.predict_proba(X_valid_dipho)[:,1]
+        rocs_valid_dipho[i] = roc_curve(rocs_valid_Y_dipho,prob_valid_dipho[i],sample_weight=rocs_valid_W_dipho)
+    
+        prob_valid_QCD[i] = c.predict_proba(X_valid_QCD)[:,1]
+        rocs_valid_QCD[i] = roc_curve(rocs_valid_Y_QCD,prob_valid_QCD[i],sample_weight=rocs_valid_W_QCD)
+    
+    if (Train_MC_test_MC or Train_MSB_test_MC or Train_gghanddipho_test_mc):
+       prob_valid_ggh[i] = c.predict_proba(X_valid_ggh)[:,1]
+       rocs_valid_ggh[i] = roc_curve(rocs_valid_Y_ggh,prob_valid_ggh[i],sample_weight=rocs_valid_W_ggh)
+    
+       prob_valid_dipho[i] = c.predict_proba(X_valid_dipho)[:,1]
+       rocs_valid_dipho[i] = roc_curve(rocs_valid_Y_dipho,prob_valid_dipho[i],sample_weight=rocs_valid_W_dipho)
+    
+       prob_valid_qcd[i] = c.predict_proba(X_valid_qcd)[:,1]
+       rocs_valid_qcd[i] = roc_curve(rocs_valid_Y_qcd,prob_valid_qcd[i],sample_weight=rocs_valid_W_qcd)
+    
+       prob_valid_gjet[i] = c.predict_proba(X_valid_gjet)[:,1]
+       rocs_valid_gjet[i] = roc_curve(rocs_valid_Y_gjet,prob_valid_gjet[i],sample_weight=rocs_valid_W_gjet)
+
+
+
+
+
+
 from sklearn.externals import joblib
-joblib.dump(clfs['target-moriond'], 'Classifier_From_Yacine_Generated_by_me.pkl')
+joblib.dump(clfs['target-moriond'], 'Classifier.pkl')
 def evaluate_sklearn(cls, vals, coef=1):
     scale = 1.0 / cls.n_estimators
     ret = np.zeros(vals.shape[0])
@@ -645,10 +949,12 @@ for i in clfs.keys():
              range=[-1,1],
              alpha=0.5, histtype='step', color = 'blue',lw=1.2, normed=1, label = 'ggh')
     plt.legend()
-    #plt.savefig('output_dijet_MVA_score_Yacine_datadriven_h5.png')
-    plt.show()
-print(tmva_train[(Y_train<0.5)])
-print(np.unique(Y_train))
+    plt.savefig('output_dijet_MVA_score.png')
+    #plt.show()
+
+
+
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn.metrics           import roc_curve, auc, roc_auc_score
 def plot_rocs(rocs = {}, dump=False, range=[[0,1],[0,1]], label='', title='', rocs_train=None):
     plt.figure(figsize=(5,4.5))
@@ -660,13 +966,13 @@ def plot_rocs(rocs = {}, dump=False, range=[[0,1],[0,1]], label='', title='', ro
     for name,roc in rocs.items():
         fpr, tpr, thr = roc
         roc_auc_ = auc(fpr, tpr, reorder=True)
-        print \
+        print "%20s %1.4f" % ( name, roc_auc_ )
         plt.plot(fpr, tpr, label=name+'(area = %0.4f)'%(roc_auc_), zorder=5, lw=1.2)
     if rocs_train is not None : 
         for name,roc in rocs_train.items():
             fpr, tpr, thr = roc
             roc_auc_ = auc(fpr, tpr, reorder=True)
-            print \
+            print "%20s %1.4f" % ( name, roc_auc_ )
             plt.plot(fpr, tpr, label=name+' train (area = %0.4f)'%(roc_auc_), zorder=5, lw=1.2, ls='--')
     plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='Luck', zorder=5)
     plt.xlabel('False positive rate')
@@ -679,7 +985,48 @@ def plot_rocs(rocs = {}, dump=False, range=[[0,1],[0,1]], label='', title='', ro
     plt.ylim(range[1])
     plt.tight_layout()
     plt.savefig('roc_'+label+'.pdf')
-    plt.show()
+    #plt.show()
+
+####X-CHECK PLOTS
+
+if (Train_datadriven_test_datadriven):
+    plot_rocs(rocs_valid, label='trained on datadriven-tested on data-driven', title = 'ROC for rejection of all backgrounds')
+    plot_rocs(rocs_valid_ggh, label='trained on datadriven-tested on data-driven-xcheck2', title = 'ROC for ggh rejection')
+    plot_rocs(rocs_valid_dipho, label='trained on datadriven-tested on data-driven-xcheck3', title = 'ROC for dipho rejection')
+    plot_rocs(rocs_valid_QCD, label='trained on datadriven-tested on data-driven-xcheck4', title = 'ROC for QCD rejection')
+
+
+if (Train_MC_test_MC):
+   plot_rocs(rocs_valid, label='trained on MC, tested on MC-xcheck1', title = 'ROC for all backgrounds')
+   plot_rocs(rocs_valid_ggh, label='trained on MC, tested on MC-xcheck2', title = 'ROC for ggh rejection')
+   plot_rocs(rocs_valid_dipho, label='trained on MC, tested on MC-xcheck3', title = 'ROC for dipho rejection')
+   plot_rocs(rocs_valid_qcd, label='trained on MC, tested on MC-xcheck4', title = 'ROC for qcd rejection')
+   plot_rocs(rocs_valid_gjet, label='trained on MC, tested on MC-xcheck5', title = 'ROC for gjet rejection')
+
+
+if (Train_MSB_test_datadriven):
+   plot_rocs(rocs_valid, label='ROC_XCHECK1_full_VBF_preselection_trained_on_MSB_tested_on_datadriven', title = 'ROC for all backgrounds')
+   plot_rocs(rocs_valid_ggh, label='ROC_XCHECK2_full_VBF_preselection_trained_on_MSB_tested_on_datadriven', title = 'ROC for ggh rejection')
+   plot_rocs(rocs_valid_dipho, label='ROC_XCHECK3_full_VBF_preselection_trained_on_MSB_tested_on_datadriven', title = 'ROC for dipho rejection')
+   plot_rocs(rocs_valid_QCD, label='ROC_XCHECK4_full_VBF_preselection_trained_on_MSB_tested_on_datadriven', title = 'ROC for QCD rejection')
+
+
+if(Train_MSB_test_MC):
+   plot_rocs(rocs_valid, label='ROC_XCHECK1_relaxed_VBF_preselection_trained_on_MSB_tested_on_MC', title = 'ROC for all backgrounds')
+   plot_rocs(rocs_valid_ggh, label='ROC_XCHECK2_relaxed_VBF_preselection_trained_on_MSB_tested_on_MC', title = 'ROC for ggh rejection')
+   plot_rocs(rocs_valid_dipho, label='ROC_XCHECK3_relaxed_VBF_preselection_trained_on_MSB_tested_on_MC', title = 'ROC for dipho rejection')
+   plot_rocs(rocs_valid_qcd, label='ROC_XCHECK4_relaxed_VBF_preselection_trained_on_MSB_tested_on_MC', title = 'ROC for qcd rejection')
+   plot_rocs(rocs_valid_gjet, label='ROC_XCHECK5_relaxed_VBF_preselection_trained_on_MSB_tested_on_MC', title = 'ROC for gjet rejection')
+
+if(Train_gghanddipho_test_mc):
+    plot_rocs(rocs_valid, label='ROC_XCHECK1_relax_VBF_preselection_trained_on_ggh_and_dipho_tested_on_mc', title = 'ROC for all backgrounds')
+    plot_rocs(rocs_valid_ggh, label='ROC_XCHECK2_relax_VBF_preselection_trained_on_ggh_and_dipho_tested_on_mc', title = 'ROC for ggh rejection')
+    plot_rocs(rocs_valid_dipho, label='ROC_XCHECK3_relax_VBF_preselection_trained_on_ggh_and_dipho_tested_on_mc', title = 'ROC for dipho rejection')
+    plot_rocs(rocs_valid_qcd, label='ROC_XCHECK4_relax_VBF_preselection_trained_on_ggh_and_dipho_tested_on_mc', title = 'ROC for jet-jet rejection')  
+    plot_rocs(rocs_valid_gjet, label='ROC_XCHECK5_relax_VBF_preselection_trained_on_ggh_and_dipho_tested_on_mc', title = 'ROC for gjet rejection')
+
+
+
 plot_rocs(rocs_valid, label='cross-check', title = 'cross-check')
 def compare_train_test(clf,x_train,y_train,w_train,x_test,y_test,w_test, bins=100, label=''):
     fig = plt.figure(figsize=(5,5))
@@ -728,19 +1075,22 @@ def compare_train_test(clf,x_train,y_train,w_train,x_test,y_test,w_test, bins=10
     err = np.sqrt(hist * scale) / scale
 
     plt.errorbar(center, hist, yerr=err, fmt='.', c='b', label='B (test)', markersize=8,capthick=0)
-
-    plt.xlabel(\
-    plt.ylabel(\
+    plt.xlabel("BDT output")
+    plt.ylabel("Arbitrary units")
     plt.legend(loc='best')
     plt.ylim([0.01, 2*max(hist)])
     plt.savefig('overtrain_%s.pdf' % label)
-    plt.show()
+    #plt.show()
+
+
 for i, c in clfs.items():
-    print \
+    print " --- ", i
     compare_train_test(c,
                        X_train,Y_train,W_train, 
                        X_valid,Y_valid,W_valid, label=i)
+
+
 ### Adding a few lines to extract the xml file
 import converter as con
-xml_file_name = 'DataDriven_xml_Yacine_example.xml'
+xml_file_name = 'DataDriven_xml.xml'
 con.convert_bdt__Grad(bdt_clf = clfs['target-moriond'], input_var_list = _features_, tmva_outfile_xml = xml_file_name, X_train= X_train)
