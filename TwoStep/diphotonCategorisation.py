@@ -10,7 +10,7 @@ import pickle
 from sklearn.metrics import roc_auc_score, roc_curve
 from os import path, system
 import uproot as upr
-from addRowFunctions import addPt, truthDipho, reco, diphoWeight, altDiphoWeight
+from addRowFunctions import addPt, truthDipho, reco, diphoWeight, altDiphoWeight, resolution_weighting
 from otherHelpers import prettyHist, getAMS, computeBkg, getRealSigma
 from root_numpy import tree2array, fill_hist
 import usefulStyle as useSty
@@ -118,8 +118,49 @@ if not opts.dataFrame:
   #add extra info to dataframe
   print 'about to add extra columns'
   trainTotal['truthDipho'] = trainTotal.apply(truthDipho,axis=1)
-  trainTotal['diphoWeight'] = trainTotal.apply(diphoWeight,axis=1)
-  trainTotal['altDiphoWeight'] = trainTotal.apply(altDiphoWeight, axis=1)
+  #trainTotal['diphoWeight'] = trainTotal.apply(diphoWeight,axis=1)
+  #trainTotal['altDiphoWeight'] = trainTotal.apply(altDiphoWeight, axis=1)
+  trainTotal['resolution_weighting']  = trainTotal.apply(resolution_weighting, axis = 1)
+  def adjust_qcd_weight(row):
+      if row['proc']=='QCD':
+         return row['resolution_weighting']/25
+      else:
+         return row['resolution_weighting']
+
+  trainTotal['qcd_weighting'] = trainTotal.apply(adjust_qcd_weight, axis=1)
+  ###################################################
+  bkgSumW = np.sum(trainTotal[trainTotal.truthDipho==0]['qcd_weighting'].values)#summing weights of bkg events                                                                                                               
+  sigSumW = np.sum(trainTotal[trainTotal.truthDipho==1]['qcd_weighting'].values)#summing weights of signal events                                                                                                                              
+  totalSumW = bkgSumW+sigSumW
+  #getting number of events  
+  bkg_df = trainTotal[trainTotal.truthDipho==0]
+  sig_df = trainTotal[trainTotal.truthDipho==1]
+  
+  print 'bkg events'
+  print bkg_df.shape[0]
+  print 'sig events'
+  print sig_df.shape[0]
+  
+  print 'weights before equalisation'
+  print 'bkgSumW, sigSumW ,ratio = %.3f, %.3f, %.3f'%(bkgSumW, sigSumW,sigSumW/bkgSumW)
+  
+  def equalise_weight(row, ratio1):
+     weight =abs(row['qcd_weighting'])
+     if row['truthDipho']==1:
+         return ratio1*weight
+     else:
+         return weight
+  trainTotal['diphoWeight'] = trainTotal.apply(equalise_weight, axis=1, args=[bkgSumW/sigSumW])#multiply each of the VH weight values by sum of nonsig weight/sum of sig weight
+
+  bkgSumW = np.sum(trainTotal[trainTotal.truthDipho==0]['diphoWeight'].values)#summing weights of bkg events                                                                                                                              
+  sigSumW = np.sum(trainTotal[trainTotal.truthDipho==1]['diphoWeight'].values)#summing weights of signal events                                                                                                                                                                                                                                                                                                                                                                      
+  totalSumW = bkgSumW+sigSumW
+  #getting number of events                                                                                                                                                                                                                  
+  print 'weights after equalisation'
+  print 'bkgSumW, sigSumW ,ratio = %.3f, %.3f, %.3f'%(bkgSumW, sigSumW,sigSumW/bkgSumW)
+     
+  ###########################################################################################################
+ 
   print 'all columns added'
 
   #save as a pickle file
@@ -134,11 +175,11 @@ if not opts.dataFrame:
 else:  trainTotal = pd.read_pickle('%s/%s'%(frameDir,opts.dataFrame))
 print 'Successfully loaded the dataframe'
 
-sigSumW = np.sum( trainTotal[trainTotal.HTXSstage1cat>0.01]['weight'].values )
-bkgSumW = np.sum( trainTotal[trainTotal.HTXSstage1cat==0]['weight'].values )
-print 'sigSumW %.6f'%sigSumW
-print 'bkgSumW %.6f'%bkgSumW
-print 'ratio %.6f'%(sigSumW/bkgSumW)
+#sigSumW = np.sum( trainTotal[trainTotal.HTXSstage1cat>0.01]['weight'].values )
+#bkgSumW = np.sum( trainTotal[trainTotal.HTXSstage1cat==0]['weight'].values )
+#print 'sigSumW %.6f'%sigSumW
+#print 'bkgSumW %.6f'%bkgSumW
+#print 'ratio %.6f'%(sigSumW/bkgSumW)
 #exit('first just count the weights')
 
 #define the indices shuffle (useful to keep this separate so it can be re-used)
@@ -151,7 +192,7 @@ diphoValidLimit = int(theShape*(trainFrac+validFrac))
 diphoX  = trainTotal[diphoVars].values
 diphoY  = trainTotal['truthDipho'].values
 diphoTW = trainTotal['diphoWeight'].values
-diphoAW = trainTotal['altDiphoWeight'].values
+#diphoAW = trainTotal['altDiphoWeight'].values
 diphoFW = trainTotal['weight'].values
 diphoM  = trainTotal['dipho_mass'].values
 del trainTotal
@@ -159,14 +200,14 @@ del trainTotal
 diphoX  = diphoX[diphoShuffle]
 diphoY  = diphoY[diphoShuffle]
 diphoTW = diphoTW[diphoShuffle]
-diphoAW = diphoAW[diphoShuffle]
+#diphoAW = diphoAW[diphoShuffle]
 diphoFW = diphoFW[diphoShuffle]
 diphoM  = diphoM[diphoShuffle]
 
 diphoTrainX,  diphoValidX,  diphoTestX  = np.split( diphoX,  [diphoTrainLimit,diphoValidLimit] )
 diphoTrainY,  diphoValidY,  diphoTestY  = np.split( diphoY,  [diphoTrainLimit,diphoValidLimit] )
 diphoTrainTW, diphoValidTW, diphoTestTW = np.split( diphoTW, [diphoTrainLimit,diphoValidLimit] )
-diphoTrainAW, diphoValidAW, diphoTestAW = np.split( diphoAW, [diphoTrainLimit,diphoValidLimit] )
+#diphoTrainAW, diphoValidAW, diphoTestAW = np.split( diphoAW, [diphoTrainLimit,diphoValidLimit] )
 diphoTrainFW, diphoValidFW, diphoTestFW = np.split( diphoFW, [diphoTrainLimit,diphoValidLimit] )
 diphoTrainM,  diphoValidM,  diphoTestM  = np.split( diphoM,  [diphoTrainLimit,diphoValidLimit] )
 
@@ -197,30 +238,24 @@ diphoModel.save_model('%s/diphoModel%s.model'%(modelDir,paramExt))
 print 'saved as %s/diphoModel%s.model'%(modelDir,paramExt)
 
 
-
-
-#build same thing but with equalised weights
-altTrainingDipho = xg.DMatrix(diphoTrainX, label=diphoTrainY, weight=diphoTrainAW, feature_names=diphoVars)
-print 'about to train alternative diphoton BDT'
-altDiphoModel = xg.train(trainParams, altTrainingDipho)
-print 'done'
-
-#save it
-altDiphoModel.save_model('%s/altDiphoModel%s.model'%(modelDir,paramExt))
-print 'saved as %s/altDiphoModel%s.model'%(modelDir,paramExt)
-
 #check performance of each training
 diphoPredYxcheck = diphoModel.predict(trainingDipho)
+#plotting the diphoton BDT distributions for ggh events                                                                                                                                                                                      
+x_vbf_dipho = (diphoPredYxcheck )[diphoTrainY==1]
+w_vbf_dipho = (diphoTrainFW)[diphoTrainY ==1]
+plt.figure()
+plt.hist(x_vbf_dipho, bins = 50, weights = w_vbf_dipho, range = [0,1], label = 'vbf events')
+plt.xlabel('diphoton BDT probability')
+plt.title('vbf events')
+plt.savefig('Dipho_dist_vbf_train_script.png', bbox_inches = 'tight')
+plt.savefig('Dipho_dist_vbf_train_script.pdf', bbox_inches = 'tight')
+
+
 diphoPredY = diphoModel.predict(testingDipho)
 print 'Default training performance:'
 print 'area under roc curve for training set = %1.3f'%( roc_auc_score(diphoTrainY, diphoPredYxcheck, sample_weight=diphoTrainFW) )
 print 'area under roc curve for test set     = %1.3f'%( roc_auc_score(diphoTestY, diphoPredY, sample_weight=diphoTestFW) )
 
-altDiphoPredYxcheck = altDiphoModel.predict(trainingDipho)
-altDiphoPredY = altDiphoModel.predict(testingDipho)
-print 'Alternative training performance:'
-print 'area under roc curve for training set = %1.3f'%( roc_auc_score(diphoTrainY, altDiphoPredYxcheck, sample_weight=diphoTrainFW) )
-print 'area under roc curve for test set     = %1.3f'%( roc_auc_score(diphoTestY, altDiphoPredY, sample_weight=diphoTestFW) )
 
 exit("Plotting not working for now so exit")
 #make some plots 
@@ -235,21 +270,12 @@ plt.xlabel('Background efficiency')
 plt.ylabel('Signal efficiency')
 #plt.show()
 plt.savefig('diphoROC.pdf')
-bkgEff, sigEff, nada = roc_curve(diphoTestY, altDiphoPredY, sample_weight=diphoTestFW)
-plt.figure(2)
-plt.plot(bkgEff, sigEff)
-plt.xlabel('Background efficiency')
-plt.ylabel('Signal efficiency')
-#plt.show()
-plt.savefig('altDiphoROC.pdf')
+
 plt.figure(3)
 xg.plot_importance(diphoModel)
 #plt.show()
 plt.savefig('diphoImportances.pdf')
-plt.figure(4)
-xg.plot_importance(altDiphoModel)
-#plt.show()
-plt.savefig('altDiphoImportances.pdf')
+
 
 #draw sig vs background distribution
 nOutputBins = 50

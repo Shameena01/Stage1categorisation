@@ -127,3 +127,11 @@ def altDiphoWeight(row, sigWeight=1./0.001297):
         weight *= ( (row['vtxprob']/row['sigmarv']) + ((1.-row['vtxprob'])/row['sigmawv']) )
     weight = abs(weight)
     return weight
+
+#define resolution weighting
+def resolution_weighting(row):
+    weight = row['weight']
+    if row['sigmarv']>0. and row['sigmawv']>0.:
+        weight *= ( (row['vtxprob']/row['sigmarv']) + ((1.-row['vtxprob'])/row['sigmawv']) )
+    weight = abs(weight)
+    return weight
