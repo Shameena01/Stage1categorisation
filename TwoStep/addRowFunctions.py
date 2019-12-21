@@ -16,8 +16,10 @@ def truthVhHad(row):
     else: return 0
 
 def truthProcess(row):
-    if row['proc']=='ggh': return 0
-    elif row['proc']=='vbf': return 1
+    if row['sample']=='ggh': return 0
+    elif row['sample']=='VBF': return 1
+    elif row['sample']=='QCD': return 2
+    elif row['sample']=='dipho': return 2
     else:return 2
 def truthProcessTwoClass(row):
     #if row['proc']=='ggh': return 0
